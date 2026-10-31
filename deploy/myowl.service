@@ -1,0 +1,34 @@
+[Unit]
+Description=myOwl — all-in-one server & network dashboard
+Documentation=https://github.com/OWNER/myowl
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs as root so it can read auth/web logs, map connections to programs,
+# count packets (CAP_NET_RAW) and add firewall blocks (CAP_NET_ADMIN).
+# See README "Running without root" for a reduced-privilege setup.
+User=root
+ExecStart=/usr/local/bin/myowl --config /etc/myowl/config.yaml
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=full
+# ufw keeps its rules under /etc/ufw; allow writes there for one-click blocking
+ReadWritePaths=-/etc/ufw /var/lib/myowl
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+/bin/
+/release/
+*.tar.gz
+*.zip
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+# built UI is copied here by `make embed`; only the placeholder is tracked
+agent/internal/webui/dist/*
+!agent/internal/webui/dist/index.html
+*.db
+*.db-wal
+*.db-shm
+*.mmdb
+.DS_Store
+*.tsbuildinfo
+# local overrides / tooling
+/config.yaml
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
+coverage/

@@ -1,0 +1,91 @@
+# myOwl configuration
+# Location: /etc/myowl/config.yaml   (restart after editing:  sudo systemctl restart myowl)
+
+# Address the dashboard listens on.
+#   "0.0.0.0:8787"   reachable from the internet (protect with a strong password + HTTPS)
+#   "127.0.0.1:8787" only from the server itself (use an SSH tunnel or a reverse proxy) — safest
+listen: "0.0.0.0:8787"
+
+# Where the database, GeoIP file and setup code are stored.
+data_dir: /var/lib/myowl
+
+# Built-in HTTPS. Leave empty when using a reverse proxy (nginx/caddy) for TLS.
+tls:
+  cert: ""   # e.g. /etc/letsencrypt/live/monitor.example.com/fullchain.pem
+  key: ""    # e.g. /etc/letsencrypt/live/monitor.example.com/privkey.pem
+
+# Set to true when the dashboard is served over HTTPS by a reverse proxy, so the
+# login cookie gets the "Secure" flag.
+cookie_secure: false
+# Trust X-Forwarded-For / X-Real-IP / X-Forwarded-Proto from a reverse proxy on
+# localhost or a private network. Only enable when a proxy is in front.
+trust_proxy: false
+
+retention:
+  days: 14              # keep requests, threats and metrics this long
+  max_requests: 500000  # hard cap on stored HTTP requests
+
+intervals:
+  system_sec: 2
+  network_sec: 2
+  sessions_sec: 10
+
+# Web-server access logs to follow. format: auto | combined | common | json
+# (Caddy writes JSON; for nginx add $request_time at the end of the log_format to
+# get latency — see README.)
+access_logs:
+  - { path: /var/log/nginx/access.log,   format: auto, name: nginx }
+  - { path: /var/log/apache2/access.log, format: auto, name: apache }
+  - { path: /var/log/httpd/access_log,   format: auto, name: apache }
+  - { path: /var/log/caddy/access.log,   format: json, name: caddy }
+
+# SSH / sudo logs. If none exist, journald is used (journald: auto).
+auth_logs: [/var/log/auth.log, /var/log/secure]
+# Kernel/firewall logs used to spot port scans (UFW "BLOCK" lines).
+kernel_logs: [/var/log/ufw.log, /var/log/kern.log]
+journald: auto        # auto | on | off
+backfill_lines: 500   # lines of history read from each log on first start
+
+geoip:
+  path: /var/lib/myowl/dbip-city-lite.mmdb
+  auto_download: true   # downloads the free DB-IP "IP to City Lite" database (CC BY 4.0)
+
+# Optional: pin the server's own position on the world map.
+server_location: { lat: 0, lon: 0, city: "" }
+
+# Passive packet counting (per-IP bandwidth + SYN port-scan detection).
+# Needs root or CAP_NET_RAW; silently disabled otherwise.
+capture:
+  enabled: true
+
+# One-click "Block IP" from the dashboard (needs root).
+firewall:
+  enabled: true
+  backend: auto          # auto | ufw | nftables | iptables
+  whitelist: []          # IPs/CIDRs that can never be blocked, e.g. your home IP
+  allow_private: false   # allow blocking 10.x/192.168.x/172.16-31.x addresses
+
+detection:
+  ssh_fail_threshold: 5      # failed SSH logins from one IP ...
+  ssh_window_min: 10         # ... within this many minutes = brute force
+  request_rate_per_min: 300  # requests per minute from one IP = flood
+  not_found_threshold: 30    # 404s per minute from one IP = scanning
+  port_scan_ports: 12        # distinct ports probed ...
+  port_scan_window_sec: 60   # ... within this window = port scan
+  ignore_paths: []           # e.g. ["/health"]
+  ignore_ips: []             # e.g. your uptime monitor
+
+notify:
+  webhook:
+    url: ""                  # Slack/Discord/any JSON webhook
+    headers: {}
+  telegram:
+    bot_token: ""            # from @BotFather
+    chat_id: ""
+  smtp:
+    host: ""
+    port: 587                # 465 = implicit TLS, 587 = STARTTLS
+    username: ""
+    password: ""
+    from: ""
+    to: []

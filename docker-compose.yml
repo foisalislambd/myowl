@@ -1,0 +1,51 @@
+# myOwl with Docker Compose
+#
+#   cp config.example.yaml config.yaml        # edit listen/alerts as needed
+#   docker compose pull && docker compose up -d   # published image
+#   docker compose up -d --build                   # or build from this checkout
+#   docker compose logs myowl | grep -i "setup code"     # first-login code
+#
+# Replace "owner" in `image:` with the lowercase GitHub user/org that publishes
+# the image (or set MYOWL_IMAGE=ghcr.io/<owner>/myowl:<version>).
+#
+# To see the HOST (not just the container) myOwl shares the host's network and
+# process namespaces and reads host logs read-only. systemd service status and
+# the systemd journal are not available inside the container; prefer the native
+# install (install.sh) for full coverage.
+services:
+  myowl:
+    image: ${MYOWL_IMAGE:-ghcr.io/owner/myowl:latest}   # replace "owner" (lowercase) or set MYOWL_IMAGE
+    build: .
+    container_name: myowl
+    restart: unless-stopped
+    network_mode: host        # real interfaces, connections and listening ports (no `ports:` needed)
+    pid: host                 # host processes (top processes, connection owners)
+    cap_add:
+      - NET_ADMIN             # one-click Block IP (nftables/iptables)
+      - NET_RAW               # passive packet counting
+      - SYS_PTRACE            # optional: map sockets to processes of other users
+    # Reduced mode without root (no IP blocking): uncomment the next line.
+    # user: "10001:4"
+    environment:
+      TZ: UTC
+      # MYOWL_LISTEN: "127.0.0.1:8787"   # overrides `listen:` from config.yaml
+    volumes:
+      - myowl-data:/var/lib/myowl
+      - ./config.yaml:/etc/myowl/config.yaml:ro
+      - /var/log:/var/log:ro                 # nginx/apache/caddy/auth logs
+      - /var/run/utmp:/var/run/utmp:ro       # who is logged in
+      - /etc/os-release:/etc/os-release:ro
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/myowl", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  myowl-data:

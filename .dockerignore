@@ -1,0 +1,18 @@
+# Keep the build context small and free of local state
+.git
+.github
+**/node_modules
+web/.next
+web/out
+bin
+release
+docs/screenshots
+*.tar.gz
+*.zip
+*.db
+*.db-*
+*.mmdb
+.DS_Store
+agent/internal/webui/dist/*
+!agent/internal/webui/dist/index.html
+config.yaml

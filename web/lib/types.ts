@@ -1,0 +1,50 @@
+export type Geo = { country?: string; cc?: string; city?: string; lat?: number; lon?: number; private?: boolean };
+export type CPU = { usage: number; per_core: number[]; cores: number; model: string; iowait: number; steal: number };
+export type Memory = { total: number; used: number; available: number; cached: number; buffers: number; percent: number; swap_total: number; swap_used: number; swap_percent: number };
+export type Disk = { mount: string; device: string; fstype: string; total: number; used: number; free: number; percent: number; inodes_percent: number };
+export type Process = { pid: number; name: string; user: string; cmd: string; cpu: number; mem_rss: number; mem_percent: number; state: string; threads: number; started: number };
+export type Service = { name: string; description: string; load: string; active: string; sub: string };
+export type HealthMsg = { level: Level; area: string; text: string };
+export type Level = "good" | "warn" | "bad";
+export type Health = { score: number; level: Level; summary: string; messages: HealthMsg[] };
+export type SystemSnapshot = {
+  ts: number; hostname: string; os: string; kernel: string; arch: string; uptime: number; boot_time: number;
+  cpu: CPU; memory: Memory; load: [number, number, number]; disks: Disk[]; disk_io: { read_bps: number; write_bps: number };
+  processes: Process[]; proc_count: number; services: Service[]; services_available: boolean; services_message?: string;
+};
+export type Iface = { name: string; rx_bps: number; tx_bps: number; rx_bytes: number; tx_bytes: number; rx_packets: number; tx_packets: number; rx_errors: number; tx_errors: number; up: boolean; addrs: string[]; mac: string };
+export type Conn = { proto: string; state: string; local_ip: string; local_port: number; remote_ip: string; remote_port: number; pid: number; process: string; user: string; bytes_sent: number; bytes_recv: number; rtt_ms: number; direction: "in" | "out" | "local"; geo: Geo };
+export type Listener = { proto: string; addr: string; port: number; pid: number; process: string; user: string; public: boolean; service: string; conns: number; risk?: string };
+export type Talker = { ip: string; conns: number; bytes_in: number; bytes_out: number; rate_in: number; rate_out: number; processes: string[]; ports: number[]; direction: string; geo: Geo; threat: boolean; blocked: boolean };
+export type GeoPoint = { lat: number; lon: number; country: string; cc: string; city: string; ips: string[]; conns: number; rate: number; threat: boolean };
+export type CountryStat = { cc: string; country: string; ips: number; conns: number; rate: number };
+export type NetworkSnapshot = {
+  ts: number; interfaces: Iface[]; total_rx_bps: number; total_tx_bps: number; connections: Conn[]; listeners: Listener[];
+  talkers: Talker[]; geo: GeoPoint[]; countries: CountryStat[]; conn_count: number; state_counts: Record<string, number>;
+  server?: Geo; source: string; capture: string;
+};
+export type HTTPRequest = { id: number; ts: number; ip: string; method: string; path: string; query: string; proto: string; status: number; bytes: number; ua: string; referer: string; host: string; latency_ms: number; source: string; flags: string[] | null; user: string; raw: string; geo: Geo };
+export type Severity = "info" | "low" | "medium" | "high" | "critical";
+export type Threat = { id: number; ts: number; last_seen: number; ip: string; type: string; severity: Severity; title: string; explanation: string; advice: string; count: number; details: Record<string, unknown> | null; acked: boolean; blocked: boolean; geo: Geo };
+export type AuthEvent = { id: number; ts: number; kind: string; user: string; ip: string; port: number; method: string; tty: string; command: string; run_as: string; raw: string; geo: Geo };
+export type LoginSession = { user: string; tty: string; host: string; login_time: number; pid: number; geo: Geo };
+export type LoginRecord = { user: string; tty: string; host: string; login: number; logout: number; kind: string; geo: Geo };
+export type SessionsSnapshot = { ts: number; current: LoginSession[]; history: LoginRecord[]; source: string; message?: string };
+export type AlertRule = { id: number; name: string; kind: string; metric: string; op: string; threshold: number; duration: number; severity: Severity; channels: string[]; cooldown: number; enabled: boolean };
+export type AlertEvent = { id: number; ts: number; rule_id: number; rule_name: string; severity: Severity; title: string; message: string; delivered: string };
+export type BlockedIP = { ip: string; ts: number; reason: string; backend: string; geo: Geo };
+export type CollectorStatus = { name: string; label: string; state: "ok" | "degraded" | "off"; message: string };
+export type MetricPoint = { ts: number; cpu: number; mem: number; swap: number; disk: number; load1: number; rx: number; tx: number; conns: number; reqs: number };
+export type KV = { key: string; label?: string; count: number; extra?: string };
+export type FlagInfo = { title: string; severity: Severity; explain: string; advice: string };
+export type FirewallStatus = { backend: string; can_block: boolean; message: string; whitelist: number };
+export type IPDetail = {
+  ip: string; geo: Geo; requests: HTTPRequest[] | null; threats: Threat[] | null; auth: AuthEvent[] | null; connections: Conn[] | null;
+  blocked: boolean; worst: string; block_refusal: string; private: boolean;
+};
+export type Overview = {
+  health: Health; system: SystemSnapshot | null; network: NetworkSnapshot | null; threats: Threat[] | null;
+  threat_counts: Record<Severity, number>; alerts: AlertEvent[] | null; metrics: MetricPoint[] | null;
+  requests_hour: number; requests_day: number; failed_logins: number; blocked: number; statuses: CollectorStatus[];
+  hostname: string; demo: boolean; version: string;
+};
